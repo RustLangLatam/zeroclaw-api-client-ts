@@ -1,0 +1,53 @@
+{
+  "name": "zeroclaw-api-client",
+  "version": "0.1.0",
+  "description": "Independent, typed, resilient TypeScript client for the ZeroClaw gateway: HTTP API, events and chat. Works in browsers, Node, Deno and Bun.",
+  "keywords": [
+    "zeroclaw",
+    "ai-agents",
+    "api-client",
+    "sdk",
+    "typescript"
+  ],
+  "license": "MIT OR Apache-2.0",
+  "author": "RustLangLatam",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RustLangLatam/zeroclaw-api-client-ts.git"
+  },
+  "homepage": "https://github.com/RustLangLatam/zeroclaw-api-client-ts#readme",
+  "bugs": "https://github.com/RustLangLatam/zeroclaw-api-client-ts/issues",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "LICENSE-APACHE",
+    "LICENSE-MIT",
+    "NOTICE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.test.json",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "test": "tsc -p tsconfig.test.json && node --test --test-reporter=spec .test-build/tests/*.test.js",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@types/node": "26.6.5",
+    "typescript": "7.0.2"
+  }
+}

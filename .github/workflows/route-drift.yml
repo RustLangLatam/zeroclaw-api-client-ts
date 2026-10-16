@@ -1,0 +1,21 @@
+name: Route Drift
+
+# The client against the gateway it targets: fails when the targeted build's
+# routes (scripts/gateway-routes.txt, refreshed from its source with each new
+# build) include one the client does not call, or lack one it does.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    name: Gateway routes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/route-drift.py
