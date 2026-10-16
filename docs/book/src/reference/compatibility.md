@@ -2,12 +2,27 @@
 
 ## ZeroClaw versions
 
-The client targets the official ZeroClaw **0.8.5** gateway
-([zeroclaw-labs/zeroclaw](https://github.com/zeroclaw-labs/zeroclaw), tag
-`v0.8.5`), whose router (its routes are in `scripts/gateway-routes.txt`) is
-the [source of truth](../architecture/decisions/ADR-001-gateway-is-the-source-of-truth.md)
-for every request and response shape here. A route enters the client once
-official ZeroClaw has it, or at least a pull request that adds it.
+This unreleased branch targets the patched ZeroClaw build `0.8.5+unified.18`,
+whose router (its routes are in `scripts/gateway-routes.txt`) is the
+[source of truth](../architecture/decisions/ADR-001-gateway-is-the-source-of-truth.md)
+for every request and response shape here. Releases, from `main`, cover only
+the official ZeroClaw gateway.
+
+Against an official ZeroClaw 0.8.5 build everything works except these
+routes, which only the patched build has (upstream declined them in
+[#11434](https://github.com/zeroclaw-labs/zeroclaw/issues/11434)); official
+ZeroClaw answers them with its web UI fallback or 404. They leave this
+branch once official ZeroClaw adopts them:
+
+| Route | Method |
+|---|---|
+| `POST /api/channels/{channel}/send` | `channels.send` |
+| `GET /api/channels/{channel}/rooms` | `channels.rooms` |
+| `POST /api/channels/{channel}/rooms` | `channels.createRoom` |
+| `GET /api/channels/{channel}/rooms/{room}/members` | `channels.roomMembers` |
+| `POST /api/channels/{channel}/rooms/{room}/invites` | `channels.invite` |
+| `DELETE /api/channels/{channel}/rooms/{room}/members/{user}` | `channels.removeMember` |
+| `POST /api/channels/{channel}/messages/{message_id}/redeliver` | `channels.redeliver` |
 
 Some routes exist only when the gateway is built with a feature: WebAuthn
 (`webauthn`) and A2A (`a2a`). Without it they answer 404.

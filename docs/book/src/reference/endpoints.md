@@ -14,7 +14,9 @@ Routes the client deliberately does not call:
 - the daemon's own protocols: `/acp` (zerocode) and `/ws/nodes` (nodes);
 - aliases of routes the client calls: `/a2a/.well-known/agents-card.json`
   (same card as `/.well-known/agents-card.json`) and `GET /api/doctor` (same
-  handler as `POST`).
+  handler as `POST`);
+- channel files, polls and delivery status (`POST /api/channels/{channel}/files`,
+  `POST …/polls`, `GET …/messages/{id}`): not covered yet.
 
 `scripts/route-drift.py` compares this table with the targeted gateway's
 routes, kept in `scripts/gateway-routes.txt`; CI runs it. With a ZeroClaw
@@ -58,7 +60,14 @@ build without it they answer 404 (`isNotFound(err)`):
 | `GET` | `/api/canvas/{id}/history` | `canvas` | `history` |
 | `GET` | `/api/channels` | `channels` | `list` |
 | `POST` | `/api/channels/bind` | `channels` | `bind` |
+| `POST` | `/api/channels/{channel}/messages/{message_id}/redeliver` | `channels` | `redeliver` |
 | `POST` | `/api/channels/{channel}/relink` | `channels` | `relink` |
+| `GET` | `/api/channels/{channel}/rooms` | `channels` | `rooms` |
+| `POST` | `/api/channels/{channel}/rooms` | `channels` | `createRoom` |
+| `POST` | `/api/channels/{channel}/rooms/{room}/invites` | `channels` | `invite` |
+| `GET` | `/api/channels/{channel}/rooms/{room}/members` | `channels` | `roomMembers` |
+| `DELETE` | `/api/channels/{channel}/rooms/{room}/members/{user}` | `channels` | `removeMember` |
+| `POST` | `/api/channels/{channel}/send` | `channels` | `send` |
 | `GET` | `/api/cli-tools` | `system` | `cliTools` |
 | `GET` | `/api/config` | `config` | `snapshot` |
 | `OPTIONS` | `/api/config` | `config` | `schema` |

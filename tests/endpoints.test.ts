@@ -3,7 +3,7 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { announce, type Client, Decision, PatchOps } from "../src/index.js";
+import { announce, type Client, Decision, isNotFound, PatchOps } from "../src/index.js";
 import { gateway, json, query } from "./helpers.js";
 
 interface Case {
@@ -143,6 +143,53 @@ const CASES: Case[] = [
     call: (c) => c.channels.relink("whatsapp.main"),
     method: "POST",
     path: "/api/channels/whatsapp.main/relink",
+  },
+  {
+    call: (c) => c.channels.send("whatsapp.main", "+34600000000", "Hola"),
+    method: "POST",
+    path: "/api/channels/whatsapp.main/send",
+    body: { to: "+34600000000", content: "Hola", thread_id: null },
+  },
+  {
+    call: (c) => c.channels.redeliver("email.box", "a@b.example"),
+    method: "POST",
+    path: "/api/channels/email.box/messages/a@b.example/redeliver",
+    reply: { channel: "email.box", message_id: "a@b.example", outcome: "redelivered" },
+    result: { channel: "email.box", message_id: "a@b.example", outcome: "redelivered" },
+  },
+  {
+    call: (c) => c.channels.rooms("whatsapp.main"),
+    method: "GET",
+    path: "/api/channels/whatsapp.main/rooms",
+    reply: {
+      channel: "whatsapp.main",
+      rooms: [{ id: "1203@g.us", name: "Team", participants: 3 }],
+    },
+    result: [{ id: "1203@g.us", name: "Team", participants: 3 }],
+  },
+  {
+    call: (c) => c.channels.createRoom("whatsapp.main", "Team", undefined, ["+34600000000"]),
+    method: "POST",
+    path: "/api/channels/whatsapp.main/rooms",
+    body: { name: "Team", topic: null, invites: ["+34600000000"] },
+  },
+  {
+    call: (c) => c.channels.roomMembers("whatsapp.main", "1203@g.us"),
+    method: "GET",
+    path: "/api/channels/whatsapp.main/rooms/1203@g.us/members",
+    reply: { members: [{ id: "+34600000000", admin: true }] },
+    result: [{ id: "+34600000000", admin: true }],
+  },
+  {
+    call: (c) => c.channels.invite("whatsapp.main", "1203@g.us", "+34611111111"),
+    method: "POST",
+    path: "/api/channels/whatsapp.main/rooms/1203@g.us/invites",
+    body: { user: "+34611111111" },
+  },
+  {
+    call: (c) => c.channels.removeMember("whatsapp.main", "1203@g.us", "+34611111111"),
+    method: "DELETE",
+    path: "/api/channels/whatsapp.main/rooms/1203@g.us/members/+34611111111",
   },
   // config
   { call: (c) => c.config.snapshot(), method: "GET", path: "/api/config" },
@@ -905,4 +952,10 @@ test("an A2A JSON-RPC error is an ApiError with status 200", async () => {
 test("a call that misses its envelope field is a DecodeError", async () => {
   const { client } = gateway(() => json({ other: 1 }));
   await assert.rejects(client.cron.list(), { name: "DecodeError" });
+});
+
+test("a message the gateway no longer keeps is not found", async () => {
+  const { client } = gateway(() => json({ channel: "email.box", error: "message not kept" }, 404));
+  const err = await client.channels.redeliver("email.box", "gone").catch((e: unknown) => e);
+  assert.ok(isNotFound(err));
 });
