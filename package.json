@@ -1,6 +1,6 @@
 {
   "name": "zeroclaw-api-client",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Independent, typed, resilient TypeScript client for the ZeroClaw gateway: HTTP API, events and chat. Works in browsers, Node, Deno and Bun.",
   "keywords": [
     "zeroclaw",
