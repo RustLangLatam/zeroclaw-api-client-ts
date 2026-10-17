@@ -9,7 +9,7 @@ care about with `instanceof`:
 | `TransportError` | No HTTP answer: connection refused, DNS or TLS failure, a broken connection, or a CORS refusal in a browser. Its `cause` is the `fetch` error. |
 | `RequestTimeoutError` | The gateway did not answer in time, after any retries. |
 | `DecodeError` | A successful answer did not have the expected shape. |
-| `WebSocketError` | A WebSocket failed, or its handshake was refused. |
+| `WebSocketError` | A WebSocket failed, or its handshake was refused for a reason other than the token (a refused token is an `ApiError` 401). |
 | `TurnError` (`code`) | A chat turn ended in an `error` frame, or was aborted (`ABORTED`). |
 | `InvalidUrlError` | The base URL is not an absolute `http`/`https` URL (thrown by the constructor). |
 

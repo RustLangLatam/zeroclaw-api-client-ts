@@ -49,8 +49,10 @@ failed turn with a `TurnError` and its `code` (`PROVIDER_ERROR`,
 The token travels in the `Sec-WebSocket-Protocol` header as
 `bearer.<token>`, beside the `zeroclaw.v1` subprotocol: the WebSocket API
 cannot send an `Authorization` header, and the gateway accepts either. The
-same API hides the handshake's status, so a refused connection (a bad
-token, an unknown agent) is a `WebSocketError`.
+same API hides the handshake's status, so after a refused connection the
+client asks `GET /api/status` with the same token: a bad token is then the
+`ApiError` (401) that call got, so `isUnauthorized` works. Any other refusal
+(an unknown agent) is a `WebSocketError`.
 
 ## One-shot: webhook and A2A
 
