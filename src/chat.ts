@@ -16,7 +16,13 @@
  */
 
 import type { Client } from "./client.js";
-import { DecodeError, RequestTimeoutError, TurnError, WebSocketError } from "./errors.js";
+import {
+  DecodeError,
+  isUnauthorized,
+  RequestTimeoutError,
+  TurnError,
+  WebSocketError,
+} from "./errors.js";
 
 /** The WebSocket subprotocol ZeroClaw's chat speaks. */
 export const SUBPROTOCOL = "zeroclaw.v1";
@@ -382,9 +388,11 @@ export class Feed extends Socket implements AsyncIterable<unknown> {
 /**
  * @internal Opens a WebSocket to `segments` on the gateway (ws for http, wss
  * for https), offering ZeroClaw's subprotocol and the bearer token. The
- * client's timeout bounds the handshake. A refused handshake (401 without a
- * valid token, 400 for an unknown agent) is a {@link WebSocketError}: the
- * WebSocket API does not expose the status.
+ * client's timeout bounds the handshake. The WebSocket API does not expose
+ * the status of a refused handshake, so the client then asks `GET
+ * /api/status` with the same token: a 401 or 403 there is thrown as that
+ * {@link ApiError}. Any other refusal (400 for an unknown agent) is a
+ * {@link WebSocketError}.
  */
 export function openSocket(
   client: Client,
@@ -421,10 +429,18 @@ export function openSocket(
       ws.removeEventListener("close", closed);
       resolve(ws);
     };
-    const closed = (event: CloseEvent): void =>
-      fail(
-        new WebSocketError(`websocket error: the gateway refused the connection (${event.code})`),
+    const closed = (event: CloseEvent): void => {
+      clearTimeout(timer);
+      const refused = new WebSocketError(
+        `websocket error: the gateway refused the connection (${event.code})`,
       );
+      // A plain GET on the socket's own path answers 400 (no upgrade) before
+      // the gateway checks the token, so the token is checked on /api/status.
+      client._empty("GET", ["api", "status"]).then(
+        () => fail(refused),
+        (err: unknown) => fail(isUnauthorized(err) ? (err as Error) : refused),
+      );
+    };
     ws.addEventListener("open", opened, { once: true });
     ws.addEventListener("close", closed, { once: true });
   });

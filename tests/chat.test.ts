@@ -2,8 +2,15 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { type ChatFrame, FrameType, parseFrame, SUBPROTOCOL } from "../src/index.js";
-import { type FakeSocket, fakeWebSocket, gateway, TOKEN } from "./helpers.js";
+import {
+  type ChatFrame,
+  FrameType,
+  isUnauthorized,
+  parseFrame,
+  SUBPROTOCOL,
+  statusCode,
+} from "../src/index.js";
+import { type FakeSocket, fakeWebSocket, gateway, json, TOKEN } from "./helpers.js";
 
 function chatGateway(serve: (socket: FakeSocket) => void) {
   const sockets: FakeSocket[] = [];
@@ -111,6 +118,15 @@ test("an error before the session starts fails the chat", async () => {
 test("a refused handshake is a WebSocketError", async () => {
   const { client } = chatGateway((s) => s.close(1006));
   await assert.rejects(client.chat("helper"), { name: "WebSocketError" });
+});
+
+test("a handshake refused for the token is the ApiError of /api/status", async () => {
+  const WebSocket = fakeWebSocket((s) => s.close(1006));
+  const { client, requests } = gateway(() => json({ error: "Unauthorized" }, 401), { WebSocket });
+  const err = await client.chat("helper").catch((e: unknown) => e);
+  assert.ok(isUnauthorized(err));
+  assert.equal(statusCode(err), 401);
+  assert.equal(requests[0]?.url.pathname, "/api/status");
 });
 
 test("a connection lost mid-turn is a WebSocketError", async () => {
